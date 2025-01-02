@@ -1,97 +1,96 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:upyog/widgets/citizen-services.dart';
+import 'package:upyog/widgets/data_provider.dart';
 
 class ChooseLocation extends StatefulWidget {
-  
-  final dynamic tenantData;
-  const ChooseLocation({super.key,required this.tenantData});
+  const ChooseLocation({Key? key}) : super(key: key);
 
   @override
   State<ChooseLocation> createState() => _ChooseLocationState();
 }
 
 class _ChooseLocationState extends State<ChooseLocation> {
-    List<String> cityNames = [];
-     List<String> filteredCityNames = []; // List for filtered cities
-     String? _selectedCity; // Track the selected city
-     TextEditingController _searchController = TextEditingController(); // Controller for search field
+  List<String> cityNames = [];
+  List<String> filteredCityNames = [];
+  String? _selectedCity;
+  final TextEditingController _searchController = TextEditingController();
+
   @override
-   @override
   void initState() {
     super.initState();
-    _extractCityNames();
-     _searchController.addListener(_filterCities); // Listen for changes in the search field
+    // Fetch data when screen loads
+    final dataProvider = Provider.of<DataProvider>(context, listen: false);
+    dataProvider.fetchData().then((_) {
+      _extractCityNames(dataProvider.mdmsData);
+    });
+
+    _searchController.addListener(_filterCities);
   }
-  void _extractCityNames() {
-    // Check if the 'tenant' and 'tenants' keys exist
-    if (widget.tenantData != null ) {
-      final tenants = widget.tenantData as List<dynamic>;
+
+  void _extractCityNames(Map<String, dynamic> mdmsData) {
+    if (mdmsData['tenant'] != null && mdmsData['tenant']['tenants'] != null) {
+      final tenants = mdmsData['tenant']['tenants'] as List<dynamic>;
       setState(() {
         cityNames = tenants
             .map((tenant) {
-              // Accessing the city and extracting the 'name' field
               final city = tenant['city'];
-              return city != null ? city['name'] as String : 'Unknown City';
+              return city?['name'] ?? 'Unknown City';
             })
+            .whereType<String>() // Ensure we only have Strings
             .toList();
-        filteredCityNames = List.from(cityNames); // Initially show all cities
-      });
-    } else {
-      setState(() {
-        cityNames = []; // If there's no tenant data, leave the list empty
-        filteredCityNames = [];
+        filteredCityNames = List.from(cityNames);
       });
     }
   }
-   void _filterCities() {
-    // Filter cities based on the search query
+
+  void _filterCities() {
     String query = _searchController.text.toLowerCase();
     setState(() {
       filteredCityNames = cityNames
-          .where((city) => city.toLowerCase().contains(query)) // Case-insensitive search
+          .where((city) => city.toLowerCase().contains(query))
           .toList();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    print('Received Data:${widget.tenantData}');
+    final dataProvider = Provider.of<DataProvider>(context);
     return Scaffold(
-       appBar: AppBar(
+      appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pop(context); // Pop the current screen (navigate back)
+            Navigator.pop(context);
           },
-       )),
+        ),
+      ),
       body: SafeArea(
-        child: Container(
-          color: Colors.white,
-          margin: const EdgeInsets.all(20.0),
-          child: Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(20.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+        child: dataProvider.mdmsData.isEmpty
+            ? const Center(child: CircularProgressIndicator())
+            : Container(
+                margin: const EdgeInsets.all(20.0),
+                child: Column(
                   children: [
-                    Text(
-                      'Choose your location',
-                      style: TextStyle(
-                          fontSize: 28.0,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black),
-                    )
-                  ],
-                ),
-              ),
-              //second row
-              // Second Row: Search Bar
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20.0, vertical: 30),
-                child: Row(
-                  children: [
-                    Expanded(
+                    const Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Choose your location',
+                            style: TextStyle(
+                                fontSize: 28.0,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Search Bar
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20.0, vertical: 30),
                       child: TextField(
                         controller: _searchController,
                         decoration: InputDecoration(
@@ -107,28 +106,22 @@ class _ChooseLocationState extends State<ChooseLocation> {
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              //third row
-               Expanded(
-                child: ListView.builder(
-                  itemCount: filteredCityNames.length,
-                  itemBuilder: (context, index) {
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: ListTile(
+                    // City List
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: filteredCityNames.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
                             title: Row(
                               children: [
                                 Text(
-                                  filteredCityNames[index], // City name first
-                                  style: const TextStyle(fontSize: 18.0, color: Colors.black),
+                                  filteredCityNames[index],
+                                  style: const TextStyle(
+                                      fontSize: 18.0, color: Colors.black),
                                 ),
-                                const Spacer(), // Spacer to push radio button to the right
+                                const Spacer(),
                                 Transform.scale(
-                                  scale: 1.8, // Increase size of the radio button (1.5 times)
+                                  scale: 1.8,
                                   child: Radio<String>(
                                     value: filteredCityNames[index],
                                     groupValue: _selectedCity,
@@ -142,17 +135,56 @@ class _ChooseLocationState extends State<ChooseLocation> {
                                 ),
                               ],
                             ),
+                          );
+                        },
+                      ),
+                    ),
+                    // Continue Button
+                    SizedBox(width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8D143F),
+                          foregroundColor: Colors.white,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.zero,
                           ),
                         ),
-                      ],
-                    );
-                  },
+                        onPressed: () {
+                          if (_selectedCity != null) {
+                            print('Selected City: $_selectedCity');
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const CitizenServices()));
+                          } else {
+                            print('No city selected');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  behavior: SnackBarBehavior.floating,
+                                  margin: const EdgeInsets.only(
+                                      left: 20.0,
+                                      right: 20.0,
+                                      bottom: 100.0), // Adjust bottom spacing
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                        10.0), // Round the corners
+                                  ),
+                                  content: const Text(
+                                      'Please select a location to proceed')),
+                            );
+                          }
+                        },
+                        child: const Text(
+                          'Continue',
+                          style: TextStyle(
+                              fontSize: 20.0, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-            
-          ),
-        ),
       ),
     );
   }

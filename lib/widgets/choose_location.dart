@@ -57,6 +57,7 @@ class _ChooseLocationState extends State<ChooseLocation> {
   Widget build(BuildContext context) {
     final dataProvider = Provider.of<DataProvider>(context);
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),

@@ -30,6 +30,7 @@ class _ChooseLanguageScreenState extends State<ChooseLanguageScreen> {
     // If data is not yet fetched, show loading indicator
     if (data.isEmpty) {
       return const Scaffold(
+        resizeToAvoidBottomInset: false,
         body: Center(child: CircularProgressIndicator()),
       );
     }

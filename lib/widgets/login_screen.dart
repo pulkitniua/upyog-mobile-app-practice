@@ -9,6 +9,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool isChecked = false; // State to manage checkbox value
+  bool isMobileEntered = false; // State to check if mobile number is entered
+  TextEditingController mobileController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -72,10 +74,11 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             const SizedBox(width: 10),
-                            const Expanded(
+                            Expanded(
                               child: TextField(
+                                controller: mobileController,
                                 keyboardType: TextInputType.phone,
-                                decoration: InputDecoration(
+                                decoration: const InputDecoration(
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.all(
                                       Radius.circular(5),
@@ -83,7 +86,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   contentPadding: EdgeInsets.symmetric(
                                       vertical: 10, horizontal: 12),
+                                
                                 ),
+                                 onChanged: (value) {
+                                  setState(() {
+                                    // Check if mobile number is entered
+                                    isMobileEntered = value.isNotEmpty;
+                                  });
+                                },
                               ),
                             ),
                           ],
@@ -115,10 +125,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         // Continue Button (Full width)
                         Center(
                           child: ElevatedButton(
-                            onPressed: () {
-                              // button logic here
-                              
-                            },
+                            onPressed: (isMobileEntered && isChecked)
+                                ? () {
+                                  //  button logic here
+                                    print('Continue button clicked');
+                                  }: null, 
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF8D143F), 
                               foregroundColor: Colors.white,

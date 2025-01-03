@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'register_screen.dart';
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -10,157 +8,139 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  Color color = const Color(0xFF2A3170);
-  Color color2 = const Color(0xFF8D143F);
-  bool isHovered = false;
+  bool isChecked = false; // State to manage checkbox value
+
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
-        resizeToAvoidBottomInset: false,
-        body: Container(
-          color: Colors.white,
-          child: Column(children: [
-            Container(
-              child: Column(
-                children: [
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  Image.asset(
-                    'assets/images/image2.png',
-                    height: 100,
-                    width: 300,
-                  ),
-                  const Text(
-                    'UPYOG',
-                    style: TextStyle(
-                        color: Colors.redAccent,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 25,
-                        decorationThickness: 0.5),
-                  )
-                ],
-              ),
-            ),
-            Container(
-                margin: const EdgeInsets.symmetric(horizontal: 30),
-                child: Column(
-                  children: [
-                    TextFormField(
-                      decoration: const InputDecoration(
-                        labelText: 'Mobile Number',
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      decoration: const InputDecoration(
-                        labelText: 'MPIN',
-                        hintText: 'Enter your MPIN',
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      appBar: AppBar(
+        title: const Text('Login'),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 40),
+          child: Column(
+            children: [
+              // Green container starts here
+              Container(
+                width: screenWidth * 0.9,  // Adjust the width of the container
+                height: screenHeight * 0.5, // Height of the container
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        TextButton(
-                          style: TextButton.styleFrom(
-                              foregroundColor: Colors.black),
-                          child: const Text('Forgot MPIN ?'),
-                          onPressed: () {},
+                        const Text(
+                          'Provide your mobile number',
+                          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
                         ),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                              foregroundColor: Colors.black),
-                          child: const Text('Login with OTP'),
-                          onPressed: () {},
+                        const SizedBox(height: 10),
+                        const Text(
+                          'All the communications regarding the application will be sent to this mobile number.',
+                          style: TextStyle(fontSize: 15),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Mobile number',
+                          style: TextStyle(fontSize: 25),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade500,
+                                border: Border.all(color: Colors.black38),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: const Text(
+                                '+91',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: TextField(
+                                keyboardType: TextInputType.phone,
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.all(
+                                      Radius.circular(5),
+                                    ),
+                                  ),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      vertical: 10, horizontal: 12),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        // New Row with Checkbox and Privacy Policy Message
+                        Row(
+                          children: [
+                            Transform.scale(
+                              scale: 1.5,
+                              child: Checkbox(
+                                value: isChecked,
+                                onChanged: (value) {
+                                  setState(() {
+                                    isChecked = value!;
+                                  });
+                                },
+                              ),
+                            ),
+                            const Expanded(
+                              child: Text(
+                                "I agree to the UPYOG's Privacy Policy",
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        // Continue Button (Full width)
+                        Center(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // button logic here
+                              
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF8D143F), 
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(double.infinity, 50), // Full width button
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text(
+                              'Continue',
+                              style: TextStyle(fontSize: 20),
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 30),
-                    Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [color, color2],
-                          ),
-                        ),
-                        width: double.infinity,
-                        height: 45,
-                        child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                            ),
-                            onPressed: () {},
-                            child: const Text(
-                              'Login',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 20),
-                            ))),
-                  ],
-                )),
-            const SizedBox(height: 20),
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'New on UPYOG ?',
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      const SizedBox(width: 10),
-                      TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const RegisterScreen(),
-                                ));
-                          },
-                          child: const Text(
-                            'Register Now',
-                            style: TextStyle(color: Colors.red, fontSize: 18),
-                          ))
-                    ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                const Text(
-                  'OR',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: MouseRegion(
-                    onEnter: (_) => setState(() => isHovered = true),
-                    onExit: (_) => setState(() => isHovered = false),
-                    child: GestureDetector(
-                      onTap: () {},
-                      child: Container(
-                          height: 50,
-                          width: double.maxFinite,
-                          decoration: BoxDecoration(
-                            color: isHovered
-                                ? Colors.blue.withOpacity(0.8)
-                                : Colors.white,
-                            border: Border.all(color: Colors.black, width: 2.0),
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                          child: const Center(
-                            child: Text("Login/Register with MeriPehchaan",
-                                style: TextStyle(fontSize: 20)),
-                          )),
-                    ),
-                  ),
-                ),
-              ],
-            )
-          ]),
-        ));
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

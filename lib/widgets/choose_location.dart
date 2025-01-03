@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:upyog/widgets/citizen-services.dart';
 import 'package:upyog/widgets/data_provider.dart';
+import 'package:upyog/widgets/login_screen.dart';
 
 class ChooseLocation extends StatefulWidget {
   const ChooseLocation({Key? key}) : super(key: key);
@@ -156,7 +156,7 @@ class _ChooseLocationState extends State<ChooseLocation> {
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) =>
-                                        const CitizenServices()));
+                                        const LoginScreen()));
                           } else {
                             print('No city selected');
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -176,7 +176,7 @@ class _ChooseLocationState extends State<ChooseLocation> {
                           }
                         },
                         child: const Text(
-                          'Continue',
+                          'Login',
                           style: TextStyle(
                               fontSize: 20.0, fontWeight: FontWeight.bold),
                         ),

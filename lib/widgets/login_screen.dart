@@ -29,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // Green container starts here
               Container(
                 width: screenWidth * 0.9,  // Adjust the width of the container
-                height: screenHeight * 0.5, // Height of the container
+                height: screenHeight * 0.7, // Height of the container
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),

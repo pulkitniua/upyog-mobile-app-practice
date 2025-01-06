@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:upyog/widgets/otp_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,6 +14,67 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isChecked = false; // State to manage checkbox value
   bool isMobileEntered = false; // State to check if mobile number is entered
   TextEditingController mobileController = TextEditingController();
+
+  Future<void> onContinueButtonPressed() async {
+    print("Inside onContinueButtonPressed");
+
+    final mobileNumber = mobileController.text;
+    if (mobileNumber.isEmpty) {
+      print("Mobile number is empty");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter your mobile number.")),
+      );
+      return; // Stop further execution if mobile number is empty
+    }
+
+    final url =
+        Uri.parse('https://niuatt.niua.in/user-otp/v1/_send?tenantId=pg');
+    final payload = {
+      "otp": {
+        "mobileNumber": mobileNumber,
+        "tenantId": "pg",
+        "userType": "citizen",
+        "type": "login"
+      },
+      "RequestInfo": {
+        "apiId": "Rainmaker",
+        "msgId": "1736138581090|en_IN",
+        "plainAccessRequest": {}
+      }
+    };
+
+    try {
+      print("Sending API request with payload: $payload");
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(payload),
+      );
+
+      print("Response status code: ${response.statusCode}");
+      print("Response body: ${response.body}");
+
+      if (response.statusCode == 201) {
+        print("OTP sent successfully, navigating to OTP screen");
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) =>  OtpEntryScreen(mobileNumber: mobileNumber)),
+        );
+      } else {
+        print("Failed to send OTP");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text("Failed to send OTP. Code: ${response.statusCode}")),
+        );
+      }
+    } catch (e) {
+      print("Exception occurred: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("An error occurred while sending OTP.")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               // Green container starts here
               Container(
-                width: screenWidth * 0.9,  // Adjust the width of the container
+                width: screenWidth * 0.9, // Adjust the width of the container
                 height: screenHeight * 0.7, // Height of the container
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -45,7 +109,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         const Text(
                           'Provide your mobile number',
-                          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 25, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 10),
                         const Text(
@@ -86,9 +151,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   contentPadding: EdgeInsets.symmetric(
                                       vertical: 10, horizontal: 12),
-                                
                                 ),
-                                 onChanged: (value) {
+                                onChanged: (value) {
                                   setState(() {
                                     // Check if mobile number is entered
                                     isMobileEntered = value.isNotEmpty;
@@ -126,14 +190,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         Center(
                           child: ElevatedButton(
                             onPressed: (isMobileEntered && isChecked)
-                                ? () {
-                                  //  button logic here
-                                    print('Continue button clicked');
-                                  }: null, 
+                                ? onContinueButtonPressed
+                                : null,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF8D143F), 
+                              backgroundColor: const Color(0xFF8D143F),
                               foregroundColor: Colors.white,
-                              minimumSize: const Size(double.infinity, 50), // Full width button
+                              minimumSize: const Size(
+                                  double.infinity, 50), // Full width button
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),

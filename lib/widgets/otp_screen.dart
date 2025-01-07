@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-
 import 'package:upyog/widgets/citizen-services.dart';
 
 class OtpEntryScreen extends StatefulWidget {
@@ -15,9 +14,10 @@ class OtpEntryScreen extends StatefulWidget {
 
 class _OtpEntryScreenState extends State<OtpEntryScreen> {
   // Controllers for OTP input
- 
-  final String accessToken = "a691e8ef-750d-4b62-bf38-925b6a5c8580";  // accesstoken
-  final List<TextEditingController> _otpControllers = List.generate(6, (_) => TextEditingController());
+
+  //final String accessToken ="a691e8ef-750d-4b62-bf38-925b6a5c8580"; // accesstoken
+  final List<TextEditingController> _otpControllers =
+      List.generate(6, (_) => TextEditingController());
 
   // Function to handle OTP verification API call
   Future<void> onVerifyOtpPressed(BuildContext context) async {
@@ -38,10 +38,10 @@ class _OtpEntryScreenState extends State<OtpEntryScreen> {
     // Prepare the payload for API call
     final payload = {
       "username": widget.mobileNumber, // Mobile number as username
-      "password": otp,          // OTP as password
+      "password": otp, // OTP as password
       "tenantId": "pg",
       "userType": "citizen",
-      "scope":"read",
+      "scope": "read",
       "grant_type": "password",
     };
 
@@ -54,24 +54,29 @@ class _OtpEntryScreenState extends State<OtpEntryScreen> {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
           "Authorization": "Basic ZWdvdi11c2VyLWNsaWVudDo="
-          },
+        },
         body: payload,
       );
+      print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         // On success, you can navigate to the next screen or show a success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('OTP Verified Successfully!')),
-         
         );
         // Optionally, navigate to next screen after successful login:
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const CitizenServices()));
+
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const CitizenServices()));
       } else {
         // On failure, show error message
-        
-         print('Response body: ${response.body}');
+
+        print('Response body: ${response.body}');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to verify OTP , error code: ${response.statusCode}')),
+          SnackBar(
+              content: Text(
+                  'Failed to verify OTP , error code: ${response.statusCode}')),
         );
       }
     } catch (e) {
@@ -95,20 +100,24 @@ class _OtpEntryScreenState extends State<OtpEntryScreen> {
           mainAxisAlignment:
               MainAxisAlignment.start, // Align the content to start from top
           children: [
-            const SizedBox(height: 40), // Added space to push content down a bit
+            const SizedBox(
+                height: 40), // Added space to push content down a bit
             const Text(
               'OTP Verification',
               style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 10), // Added space between text and input row
+            const SizedBox(
+                height: 10), // Added space between text and input row
             const Text(
               'Enter the 6-digit OTP sent to your mobile number',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 40), // Adjusted spacing before OTP input
-            OtpInputRow(controllers: _otpControllers), // Pass the controllers here
-            const SizedBox(height: 40), // Increased spacing to push the button lower
+            OtpInputRow(
+                controllers: _otpControllers), // Pass the controllers here
+            const SizedBox(
+                height: 40), // Increased spacing to push the button lower
             ElevatedButton(
               onPressed: () => onVerifyOtpPressed(context), // Trigger API call
               style: ElevatedButton.styleFrom(

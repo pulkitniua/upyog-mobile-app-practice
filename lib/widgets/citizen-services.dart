@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:upyog/widgets/modules/e_waste/product_details.dart';
 
 class CitizenServices extends StatefulWidget {
   const CitizenServices({super.key});
@@ -122,7 +123,8 @@ class ModuleScreen extends StatelessWidget {
             // Show link only for E-Waste
               GestureDetector(
                 onTap: () {
-                  print('Link clicked');
+                  //print('Link clicked');
+                  Navigator.push(context, MaterialPageRoute(builder:(context)=>const ProductDetails()));
                 },
                 child: const Text(
                   'Create E-Waste Request',

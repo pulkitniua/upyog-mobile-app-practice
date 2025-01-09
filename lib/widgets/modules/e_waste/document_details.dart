@@ -83,7 +83,7 @@ class _DocumentDetailsState extends State<DocumentDetails> {
   // Function to navigate to the next screen
   void _goToNextScreen() {
     
-   Navigator.push(context, MaterialPageRoute(builder: (context) => const ApplicantDetails()));
+   Navigator.push(context, MaterialPageRoute(builder: (context) => ApplicantDetails()));
     
   }
 
@@ -107,7 +107,7 @@ class _DocumentDetailsState extends State<DocumentDetails> {
                 backgroundColor: const Color(0xFF8D143F),
                 padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
               ),
-              child: const Text('Choose Image',style: TextStyle(fontSize: 16, color: Colors.white),),
+              child: const Text('Choose Image',style: TextStyle(fontSize: 16, color: Colors.white)),
             ),
             const SizedBox(height: 20),
             // Display selected images
@@ -116,7 +116,7 @@ class _DocumentDetailsState extends State<DocumentDetails> {
                 children: _imageFiles.map((file) {
                   return ListTile(
                     leading: file.name.endsWith('.pdf')
-                        ? Icon(Icons.picture_as_pdf, color: Colors.red)
+                        ? const Icon(Icons.picture_as_pdf, color: Colors.red)
                         : Image.file(File(file.path), width: 50, height: 50),
                     title: Text(file.name),
                   );

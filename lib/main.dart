@@ -3,7 +3,8 @@ import 'package:upyog/widgets/splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'widgets/data_provider.dart';
 
-void main() {
+void main() async{
+   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 

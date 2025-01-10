@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:upyog/services/token_service.dart';
 import 'dart:convert';
 import 'package:upyog/widgets/modules/e_waste/localities_screen.dart';
 
@@ -18,14 +19,22 @@ class _AddressPincodeState extends State<AddressPincode> {
     const url =
         'https://niuatt.niua.in/egov-location/location/v11/boundarys/_search?hierarchyTypeCode=REVENUE&boundaryType=Locality&tenantId=pg.citya';
 
-    final payload = {
+     // Fetch the token using TokenStorage
+    final token = await TokenStorage.getToken();
+
+    if (token == null) {
+      throw Exception('No token found');
+    }
+      final payload = {
       "RequestInfo": {
         "apiId": "Rainmaker",
-        "authToken": "00a4520e-3ef1-455e-9f18-03fe87c96738",
+        "authToken": token, // Use the fetched token here
         "msgId": "1736396781738|en_IN",
         "plainAccessRequest": {}
       },
     };
+
+    
 
     try {
       final response = await http.post(

@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:upyog/services/token_service.dart';
 
-import 'package:upyog/widgets/citizen-services.dart';
+import 'package:upyog/widgets/citizen_services.dart';
 
 class OtpEntryScreen extends StatefulWidget {
   final String mobileNumber;
@@ -61,12 +64,16 @@ class _OtpEntryScreenState extends State<OtpEntryScreen> {
     print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
+         final responseData = json.decode(response.body);
+      String token = responseData['access_token']; // Get the token from response
+     
+      await TokenStorage.saveToken(token);  // Save token 
         // On success, you can navigate to the next screen or show a success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('OTP Verified Successfully!')),
         );
         // Optionally, navigate to next screen after successful login:
-
+         print(token);
         Navigator.push(context,
             MaterialPageRoute(builder: (context) => const CitizenServices()));
       } else {

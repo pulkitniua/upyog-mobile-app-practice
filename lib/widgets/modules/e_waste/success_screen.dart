@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:upyog/widgets/modules/e_waste/product_details.dart';
 
 class SuccessScreen extends StatelessWidget {
   final String requestId;
@@ -51,6 +52,28 @@ class SuccessScreen extends StatelessWidget {
                       fontWeight: FontWeight.w400,
                     ),
                   ),
+                  
+                  const SizedBox(height: 40),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=> const ProductDetails())); 
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF8D143F),
+                    
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 40,
+                        vertical: 15,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: const Text(
+                      "Go Back to Home Page",
+                      style: TextStyle(color: Colors.white,fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -58,5 +81,6 @@ class SuccessScreen extends StatelessWidget {
         ),
       ),
     );
+               
   }
 }

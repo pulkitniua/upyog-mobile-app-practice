@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'package:upyog/models/ewaste_application.dart';
 import 'package:upyog/services/token_service.dart';
-import 'dart:convert';
+import 'package:upyog/providers/ewaste_provider.dart';
 import 'package:upyog/widgets/modules/e_waste/localities_screen.dart';
+import 'dart:convert';
 
 class AddressPincode extends StatefulWidget {
   const AddressPincode({super.key});
@@ -13,70 +16,173 @@ class AddressPincode extends StatefulWidget {
 
 class _AddressPincodeState extends State<AddressPincode> {
   final TextEditingController _pincodeController = TextEditingController();
+  bool _isLoading = false;
 
-  // Function to call the API
-  Future<List<Map<String, dynamic>>> callApi(String pincode) async {
-    const url =
-        'https://niuatt.niua.in/egov-location/location/v11/boundarys/_search?hierarchyTypeCode=REVENUE&boundaryType=Locality&tenantId=pg.citya';
+  @override
+  void initState() {
+    super.initState();
+    // Initialize pincode from provider if exists
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final address = context.read<EwasteProvider>().formData.address;
+      if (address.pincode.isNotEmpty) {
+        _pincodeController.text = address.pincode;
+      }
+    });
+  }
 
-     // Fetch the token using TokenStorage
+  @override
+  void dispose() {
+    _pincodeController.dispose();
+    super.dispose();
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchLocalities(String pincode) async {
+    const url = 'https://niuatt.niua.in/egov-location/location/v11/boundarys/_search';
+    const queryParams = {
+      'hierarchyTypeCode': 'REVENUE',
+      'boundaryType': 'Locality',
+      'tenantId': 'pg.citya'
+    };
+
+    final uri = Uri.parse(url).replace(queryParameters: queryParams);
     final token = await TokenStorage.getToken();
 
     if (token == null) {
-      throw Exception('No token found');
+      throw Exception('Authentication token not found');
     }
-      final payload = {
+
+    final payload = {
       "RequestInfo": {
         "apiId": "Rainmaker",
-        "authToken": token, // Use the fetched token here
-        "msgId": "1736396781738|en_IN",
+        "authToken": token,
+        "msgId": "${DateTime.now().millisecondsSinceEpoch}|en_IN",
         "plainAccessRequest": {}
       },
     };
 
-    
-
     try {
       final response = await http.post(
-        Uri.parse(url),
+        uri,
         headers: {"Content-Type": "application/json"},
         body: json.encode(payload),
       );
 
       if (response.statusCode == 200) {
-        // Parse the response JSON
         final data = json.decode(response.body);
-        print(data);
-        final localities = data['TenantBoundary'][0]['boundary']
+        
+        if (data['TenantBoundary']?.isEmpty ?? true) {
+          return [];
+        }
+
+        final localities = (data['TenantBoundary'][0]['boundary'] as List)
             .where((boundary) {
-              // Ensure boundary['pincode'] is a list and contains the entered pincode
-              if (boundary['pincode'] != null && boundary['pincode'] is List) {
-                return (boundary['pincode'] as List).contains(int.parse(pincode));
+              final pincodes = boundary['pincode'];
+              if (pincodes is List) {
+                return pincodes.contains(int.tryParse(pincode));
               }
               return false;
             })
+            .map<Map<String, dynamic>>((boundary) => {
+                  'name': boundary['name'],
+                  'code': boundary['code'],
+                  'pincode': boundary['pincode'],
+                })
             .toList();
 
-        // Return the list of localities
-       return localities.map<Map<String, dynamic>>((boundary) {
-  return {
-    'name': boundary['name'],
-    'pincode': boundary['pincode'],
-  };
-}).toList();
+        return localities;
       } else {
-        throw Exception('Failed to load data');
+        throw Exception('Failed to load localities: ${response.statusCode}');
       }
     } catch (e) {
-      print('Exception: $e');
-      return [];
+      throw Exception('Error fetching localities: $e');
+    }
+  }
+
+  String? _validatePincode(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter a pincode';
+    }
+    if (value.length != 6 || !RegExp(r'^[0-9]+$').hasMatch(value)) {
+      return 'Please enter a valid 6-digit pincode';
+    }
+    return null;
+  }
+
+  Future<void> _handleNext() async {
+    final pincode = _pincodeController.text.trim();
+    final validationError = _validatePincode(pincode);
+    
+    if (validationError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(validationError)),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final localities = await _fetchLocalities(pincode);
+      
+      if (!mounted) return;
+
+      if (localities.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No localities found for this pincode')),
+        );
+        return;
+      }
+
+      // Update provider with pincode
+      final provider = context.read<EwasteProvider>();
+      final currentAddress = provider.formData.address;
+      
+      final updatedAddress = Address(
+        tenantId: currentAddress.tenantId,
+        doorNo: currentAddress.doorNo,
+        latitude: currentAddress.latitude,
+        longitude: currentAddress.longitude,
+        addressNumber: currentAddress.addressNumber,
+        type: currentAddress.type,
+        addressLine1: currentAddress.addressLine1,
+        addressLine2: currentAddress.addressLine2,
+        landmark: currentAddress.landmark,
+        city: currentAddress.city,
+        pincode: pincode,
+        detail: currentAddress.detail,
+        buildingName: currentAddress.buildingName,
+        street: currentAddress.street,
+        locality: currentAddress.locality,
+      );
+      
+      provider.updateAddress(updatedAddress);
+
+      // Navigate to localities screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LocalitiesScreen(localities: localities),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Address Pincode'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('Address Pincode'),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -85,15 +191,20 @@ class _AddressPincodeState extends State<AddressPincode> {
             const Text(
               'Enter Pincode',
               style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold),
+                color: Colors.black,
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 20),
-            TextField(
+            TextFormField(
               controller: _pincodeController,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
+                counterText: "",
+                hintText: "Enter 6-digit pincode",
               ),
             ),
             const SizedBox(height: 25),
@@ -101,44 +212,23 @@ class _AddressPincodeState extends State<AddressPincode> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF8D143F),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 150, vertical: 6),
                 ),
-                onPressed: () async {
-                  String pincode = _pincodeController.text.trim();
-                  if (pincode.isNotEmpty) {
-                    // Fetch localities based on pincode
-                    List<Map<String, dynamic>> localities = await callApi(pincode);
-
-                    // If data exists, navigate to the next screen
-                    if (localities.isNotEmpty) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => LocalitiesScreen(localities: localities),
+                onPressed: _isLoading ? null : _handleNext,
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 25,
+                        width: 25,
+                        child: CircularProgressIndicator(color: Colors.white),
+                      )
+                    : const Text(
+                        'Next',
+                        style: TextStyle(
+                          fontSize: 25,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
-                      );
-                    } else {
-                      // Show error if no localities found
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('No localities found')),
-                      );
-                    }
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please enter a pincode')),
-                    );
-                  }
-                },
-                child: const Center(
-                  child: Text(
-                    'Next',
-                    style: TextStyle(
-                        fontSize: 25,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ),
+                      ),
               ),
             ),
           ],

@@ -1,14 +1,101 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:upyog/models/ewaste_application.dart';
+import 'package:upyog/providers/ewaste_provider.dart';
+
 import 'package:upyog/widgets/modules/e_waste/address_pincode.dart';
 
-class ApplicantDetails extends StatelessWidget {
-  ApplicantDetails({super.key});
+class ApplicantDetails extends StatefulWidget {
+  const ApplicantDetails({super.key});
 
+  @override
+  State<ApplicantDetails> createState() => _ApplicantDetailsState();
+}
+
+class _ApplicantDetailsState extends State<ApplicantDetails> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _alternateMobileController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final applicant = context.read<EwasteProvider>().formData.applicant;
+      _nameController.text = applicant.applicantName;
+      _mobileController.text = applicant.mobileNumber;
+      _alternateMobileController.text = applicant.altMobileNumber;
+      _emailController.text = applicant.emailId;
+    });
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _mobileController.dispose();
+    _alternateMobileController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  void _saveAndNavigate() {
+    if (_formKey.currentState!.validate()) {
+      final provider = context.read<EwasteProvider>();
+      
+      // Update applicant details in provider
+      provider.updateApplicant(
+        Applicant(
+          applicantName: _nameController.text,
+          mobileNumber: _mobileController.text,
+          emailId: _emailController.text,
+          altMobileNumber: _alternateMobileController.text,
+        ),
+      );
+
+      // Navigate to next screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const AddressPincode(),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill all the required fields'),
+        ),
+      );
+    }
+  }
+
+  Widget _buildFormField({
+    required String label,
+    required TextEditingController controller,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 20),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+          ),
+          validator: validator,
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,17 +121,9 @@ class ApplicantDetails extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // Applicant Name
-                const Text(
-                  'Applicant Name',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
+                _buildFormField(
+                  label: 'Applicant Name',
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your name';
@@ -52,20 +131,11 @@ class ApplicantDetails extends StatelessWidget {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
 
-                // Mobile Number
-                const Text(
-                  'Mobile Number',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
+                _buildFormField(
+                  label: 'Mobile Number',
                   controller: _mobileController,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your mobile number';
@@ -73,44 +143,37 @@ class ApplicantDetails extends StatelessWidget {
                     if (value.length != 10) {
                       return 'Mobile number must be 10 digits';
                     }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Alternate Mobile Number
-                const Text(
-                  'Alternate Mobile Number',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _alternateMobileController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value != null && value.isNotEmpty && value.length != 10) {
-                      return 'Alternate mobile number must be 10 digits';
+                    if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                      return 'Please enter valid mobile number';
                     }
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
 
-                // Email ID
-                const Text(
-                  'Email ID',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                _buildFormField(
+                  label: 'Alternate Mobile Number',
+                  controller: _alternateMobileController,
+                  keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value != null && value.isNotEmpty) {
+                      if (value.length != 10) {
+                        return 'Alternate mobile number must be 10 digits';
+                      }
+                      if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                        return 'Please enter valid mobile number';
+                      }
+                      if (value == _mobileController.text) {
+                        return 'Alternate number should be different from primary number';
+                      }
+                    }
+                    return null;
+                  },
                 ),
-                const SizedBox(height: 20),
-                TextFormField(
+
+                _buildFormField(
+                  label: 'Email ID',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your email address';
@@ -121,40 +184,22 @@ class ApplicantDetails extends StatelessWidget {
                     return null;
                   },
                 ),
+
                 const SizedBox(height: 50),
 
                 Center(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF8D143F),
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 150, vertical: 10),
                     ),
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // If all fields are valid, navigate to the next screen
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AddressPincode(),
-                          ),
-                        );
-                      } else {
-                        // Display validation errors
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Please fill all the required fields'),
-                          ),
-                        );
-                      }
-                    },
-                    child: const Center(
-                      child: Text(
-                        'Next',
-                        style: TextStyle(
-                          fontSize: 25,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    onPressed: _saveAndNavigate,
+                    child: const Text(
+                      'Next',
+                      style: TextStyle(
+                        fontSize: 25,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
